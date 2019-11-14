@@ -10,23 +10,24 @@
 
 using namespace std;
 
-void printMat(int size, double* mat) {
-    for (int i = 0; i < size; i++) {
-        cout << "|";
-        for (int j = 0; j < size; j++) {
-            cout << " " << mat[i * size + j];
-        }
-        cout << " |" << endl;
-    }
-}
+class Matrix {
+    public:
+        int size;
+        Matrix() {}
+        virtual ~Matrix() {}
+        virtual void multWithVec(double* vec, double* into) = 0;
+        virtual void print() = 0;
+};
 
-void printVec(int size, double* vec) {
-    cout << "[";
-    for (int i = 0; i < size; i++) {
-        cout << vec[i] << ", ";
-    }
-    cout << "]" << endl;
-}
+class FullMatrix : public Matrix {
+    private:
+        double* data;
+    public:
+        FullMatrix(const string& filename);
+        ~FullMatrix();
+        void multWithVec(double* vec, double* into);
+        void print();
+};
 
 pair <int, double*> readMatrixZeroIndexed(istream& input) {
     int size = 0;
@@ -102,6 +103,45 @@ pair <int, double*> readMatrix(const string& filename) {
     }
 }
 
+FullMatrix::FullMatrix(const string& filename) {
+    pair<int, double*> matrix = readMatrix(filename);
+    size = matrix.first;
+    data = matrix.second;
+}
+
+FullMatrix::~FullMatrix() {
+    delete[] data;
+}
+
+void FullMatrix::multWithVec(double* vec, double* into) {
+    double acc = 0.0;
+    for (int i = 0; i < size; i++) {
+        acc = 0.0;
+        for (int j = 0; j < size; j++) {
+            acc += data[i * size + j] * vec[j];
+        }
+        into[i] = acc;
+    }
+}
+
+void FullMatrix::print() {
+    for (int i = 0; i < size; i++) {
+        cout << "|";
+        for (int j = 0; j < size; j++) {
+            cout << " " << data[i * size + j];
+        }
+        cout << " |" << endl;
+    }
+}
+
+void printVec(int size, double* vec) {
+    cout << "[";
+    for (int i = 0; i < size; i++) {
+        cout << vec[i] << ", ";
+    }
+    cout << "]" << endl;
+}
+
 pair <int, double*> readVector(int size, istream& input) {
     double* vector = new double[size]();
 
@@ -134,17 +174,6 @@ pair <int, double*> readVector(const string& filename) {
     return readVector(size, ifs);
 }
 
-void multMatVec(int size, double* mat, double* vec, double* into) {
-    double acc = 0.0;
-    for (int i = 0; i < size; i++) {
-        acc = 0.0;
-        for (int j = 0; j < size; j++) {
-            acc += mat[i * size + j] * vec[j];
-        }
-        into[i] = acc;
-    }
-}
-
 double multVecVec(int size, double* a, double* b) {
     double acc = 0.0;
     for (int i = 0; i < size; i++) {
@@ -175,7 +204,7 @@ void vecMinusNumVec(int size, double* a, double num, double* b, double* into) {
     }
 }
 
-void gradientDescent(int size, double* A, double* b, double* x) {
+void gradientDescent(int size, Matrix* A, double* b, double* x) {
     double* r = new double[size];
     double* h = new double[size];
     double alpha;
@@ -188,7 +217,7 @@ void gradientDescent(int size, double* A, double* b, double* x) {
 
     int iter = 0;
     while (true) {
-        multMatVec(size, A, r, h);
+        A->multWithVec(r, h);
         alpha = multVecVec(size, r, r) / multVecVec(size, r, h);
         vecPlusNumVec(size, x, alpha, r, x);
         vecMinusNumVec(size, r, alpha, h, r);
@@ -207,7 +236,7 @@ void gradientDescent(int size, double* A, double* b, double* x) {
     delete[] h;
 }
 
-void sdruGrad(int size, double* A, double *b, double* x) {
+void sdruGrad(int size, Matrix* A, double *b, double* x) {
     double* rO = new double[size];
     double* rN = new double[size];
     double* s = new double[size];
@@ -224,7 +253,7 @@ void sdruGrad(int size, double* A, double *b, double* x) {
 
     int iter = 0;
     while (true) {
-        multMatVec(size, A, s, h);
+        A->multWithVec(s, h);
         alpha = multVecVec(size, rO, rO) / multVecVec(size, s, h);
         vecPlusNumVec(size, x, alpha, s, x);
 
@@ -274,21 +303,6 @@ void testLoading() {
     delete[] vectR.second;
 }
 
-void testMultMatVec() {
-    int size = 3;
-    double mat[9] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 };
-    double vec[3] = { 2.0, 1.0, 3.0 };
-    double* res = new double[size];
-
-    multMatVec(size, mat, vec, res);
-
-    assert(res[0] == 13.0);
-    assert(res[1] == 31.0);
-    assert(res[2] == 49.0);
-
-    delete[] res;
-}
-
 void testMultVecVec() {
     int size = 3;
     double vecA[3] = { 2.0, 1.0, 3.0 };
@@ -297,29 +311,28 @@ void testMultVecVec() {
     assert(multVecVec(size, vecA, vecB) == 69.0);
 }
 
-void testGradientDescent() {
-    int size = 3;
-    double mat[9] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 };
-    double vec[3] = { 19.0, 46.0, 73.0 };
-    double* res = new double[size];
-    double* res2 = new double[size];
+// void testGradientDescent() {
+//     int size = 3;
+//     double mat[9] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 };
+//     double vec[3] = { 19.0, 46.0, 73.0 };
+//     double* res = new double[size];
+//     double* res2 = new double[size];
 
-    gradientDescent(size, mat, vec, res);
+//     gradientDescent(size, mat, vec, res);
 
-    multMatVec(size, mat, res, res2);
+//     multMatVec(size, mat, res, res2);
 
-    printVec(size, vec);
-    printVec(size, res2);
+//     printVec(size, vec);
+//     printVec(size, res2);
 
-    delete[] res;
-    delete[] res2;
-}
+//     delete[] res;
+//     delete[] res2;
+// }
 
 void test() {
     testLoading();
-    testMultMatVec();
     testMultVecVec();
-    testGradientDescent();
+    // testGradientDescent();
 }
 
 int main(int argc, char** argv) {
@@ -333,21 +346,20 @@ int main(int argc, char** argv) {
     string matrixFN = argv[1];
     string vectorFN = argv[2];
 
-    pair<int, double*> matrixR = readMatrix(matrixFN);
+    Matrix* matrix = new FullMatrix(matrixFN);
     pair<int, double*> vectorR = readVector(vectorFN);
 
-    int size = matrixR.first;
-    double* mat = matrixR.second;
+    int size = matrix->size;
     double* vec = vectorR.second;
 
     double* result = new double[size];
     double* result2 = new double[size];
 
-    gradientDescent(size, mat, vec, result);
+    gradientDescent(size, matrix, vec, result);
 
     // cout << endl << endl;
     // printVec(size, result);
-    multMatVec(size, mat, result, result2);
+    matrix->multWithVec(result, result2);
 
     int x = 0;
     cout << "-> " << vec[x] << " - " << result2[x] << endl;
@@ -365,7 +377,7 @@ int main(int argc, char** argv) {
     // cout << "-> " << vec[x] << " - " << result[x] << endl;
 
 
-    delete[] mat;
+    delete matrix;
     delete[] vec;
     delete[] result;
     delete[] result2;
