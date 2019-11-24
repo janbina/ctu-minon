@@ -29,7 +29,19 @@ class FullMatrix : public Matrix {
         void print();
 };
 
-pair <int, double*> readMatrixZeroIndexed(istream& input) {
+class CrMatrix : public Matrix {
+    private:
+        double* data;
+        int* ci;
+        int* addr;
+    public:
+        CrMatrix(const string& filename);
+        ~CrMatrix();
+        void multWithVec(double* vec, double* into);
+        void print();
+};
+
+pair <int, double*> readMatrix(istream& input, bool oneIndexed = false) {
     int size = 0;
     int nonZeros = 0;
     
@@ -41,28 +53,7 @@ pair <int, double*> readMatrixZeroIndexed(istream& input) {
     double num = 0.0;
     for (int x = 0; x < nonZeros; x++) {
         input >> i >> j >> num;
-        matrix[i * size + j] = num;
-    }
-
-    cout << "Loaded matrix of size [" << size << ", " << size << "] with " << nonZeros << " non zero numbers." << endl;
-
-    return make_pair(size, matrix);
-}
-
-pair <int, double*> readMatrixOneIndexed(istream& input) {
-    int size = 0;
-    int nonZeros = 0;
-    
-    input >> size >> nonZeros;
-
-    double* matrix = new double[size * size]();
-
-    int i, j = 0;
-    double num = 0.0;
-    for (int x = 0; x < nonZeros; x++) {
-        input >> i >> j >> num;
-        i--;
-        j--;
+        if (oneIndexed) { i--; j--;}
         matrix[i * size + j] = num;
     }
 
@@ -95,9 +86,9 @@ pair <int, double*> readMatrix(const string& filename) {
     ifstream ifs(filename);
 
     if (filename.find("mat_cct") != string::npos || filename.find("mat_ps") != string::npos) {
-        return readMatrixZeroIndexed(ifs);
+        return readMatrix(ifs);
     } else if (filename.find("mat_cr") != string::npos) {
-        return readMatrixOneIndexed(ifs);
+        return readMatrix(ifs, true);
     } else {
         return readMatrixFull(ifs);
     }
@@ -132,6 +123,66 @@ void FullMatrix::print() {
         }
         cout << " |" << endl;
     }
+}
+
+CrMatrix::CrMatrix(const string& filename) {
+    pair<int, double*> matrix = readMatrix(filename);
+    
+    ifstream input(filename);
+
+    bool oneIndexed;
+    if (filename.find("mat_cct") != string::npos || filename.find("mat_ps") != string::npos) {
+        oneIndexed = false;
+    } else if (filename.find("mat_cr") != string::npos) {
+        oneIndexed = true;
+    }
+
+    int nonZeros;
+    input >> size >> nonZeros;
+
+    data = new double[nonZeros];
+    ci = new int[nonZeros];
+    addr = new int[size + 1];
+    addr[size] = nonZeros;
+
+    int i, j = 0;
+    int previ = -1;
+    double num = 0.0;
+    for (int x = 0; x < nonZeros; x++) {
+        input >> i >> j >> num;
+        if (oneIndexed) { i--; j--;}
+        
+        data[x] = num;
+        ci[x] = j;
+        if (previ < i) {
+            previ = i;
+            addr[i] = x;
+        }
+    }
+}
+
+CrMatrix::~CrMatrix() {
+    delete[] data;
+    delete[] ci;
+    delete[] addr;
+}
+
+void CrMatrix::multWithVec(double* vec, double* into) {
+    double acc = 0.0;
+    for (int i = 0; i < size; i++) {
+        acc = 0.0;
+        int start = addr[i];
+        int end = addr[i + 1];
+        for (int jX = start; jX < end; jX++) {
+            int j = ci[jX];
+            acc += data[jX] * vec[j];
+        }
+        into[i] = acc;
+    }
+}
+
+void CrMatrix::print() {
+    // Not supported
 }
 
 void printVec(int size, double* vec) {
@@ -282,34 +333,34 @@ void sdruGrad(int size, Matrix* A, double *b, double* x) {
 
 }
 
-void testLoading() {
-    istringstream mat("2 3 \n 0 0 1.0 \n 1 0 3.0 \n 1 1 4.0");
-    auto matrixR = readMatrixZeroIndexed(mat);
-    assert(matrixR.first == 2);
-    assert(matrixR.second[0] == 1.0);
-    assert(matrixR.second[1] == 0.0);
-    assert(matrixR.second[2] == 3.0);
-    assert(matrixR.second[3] == 4.0);
-    delete[] matrixR.second;
+// void testLoading() {
+//     istringstream mat("2 3 \n 0 0 1.0 \n 1 0 3.0 \n 1 1 4.0");
+//     auto matrixR = readMatrixZeroIndexed(mat);
+//     assert(matrixR.first == 2);
+//     assert(matrixR.second[0] == 1.0);
+//     assert(matrixR.second[1] == 0.0);
+//     assert(matrixR.second[2] == 3.0);
+//     assert(matrixR.second[3] == 4.0);
+//     delete[] matrixR.second;
 
 
-    istringstream vec("1.0 \n 2.0 \n 3.0 \n 4.0");
-    auto vectR = readVector(4, vec);
-    assert(vectR.first == 4);
-    assert(vectR.second[0] == 1.0);
-    assert(vectR.second[1] == 2.0);
-    assert(vectR.second[2] == 3.0);
-    assert(vectR.second[3] == 4.0);
-    delete[] vectR.second;
-}
+//     istringstream vec("1.0 \n 2.0 \n 3.0 \n 4.0");
+//     auto vectR = readVector(4, vec);
+//     assert(vectR.first == 4);
+//     assert(vectR.second[0] == 1.0);
+//     assert(vectR.second[1] == 2.0);
+//     assert(vectR.second[2] == 3.0);
+//     assert(vectR.second[3] == 4.0);
+//     delete[] vectR.second;
+// }
 
-void testMultVecVec() {
-    int size = 3;
-    double vecA[3] = { 2.0, 1.0, 3.0 };
-    double vecB[3] = { 10.0, 4.0, 15.0 };
+// void testMultVecVec() {
+//     int size = 3;
+//     double vecA[3] = { 2.0, 1.0, 3.0 };
+//     double vecB[3] = { 10.0, 4.0, 15.0 };
 
-    assert(multVecVec(size, vecA, vecB) == 69.0);
-}
+//     assert(multVecVec(size, vecA, vecB) == 69.0);
+// }
 
 // void testGradientDescent() {
 //     int size = 3;
@@ -329,24 +380,36 @@ void testMultVecVec() {
 //     delete[] res2;
 // }
 
-void test() {
-    testLoading();
-    testMultVecVec();
-    // testGradientDescent();
-}
+// void test() {
+//     testLoading();
+//     testMultVecVec();
+//     testGradientDescent();
+// }
 
 int main(int argc, char** argv) {
 
     if (argc < 3) {
-        cout << "Provide filename of matrix and vector, like this:" << endl;
-        cout << "\t" << argv[0] << " matrix.txt vector.txt" << endl;
+        cout << "Provide filename of matrix and vector, eventually matrix storing method, like this:" << endl;
+        cout << "\t" << argv[0] << " matrix.txt vector.txt [full/cr]" << endl;
         return 1;
     }
 
     string matrixFN = argv[1];
     string vectorFN = argv[2];
 
-    Matrix* matrix = new FullMatrix(matrixFN);
+    bool CR = false;
+    if (argc >= 4 && string(argv[3]).compare("cr") == 0) {
+        CR = true;
+    }
+    
+
+    Matrix* matrix;
+    if (CR) {
+        matrix = new CrMatrix(matrixFN);
+    } else {
+        matrix = new FullMatrix(matrixFN);
+    }
+    
     pair<int, double*> vectorR = readVector(vectorFN);
 
     int size = matrix->size;
