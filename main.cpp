@@ -16,7 +16,6 @@ class Matrix {
         Matrix() {}
         virtual ~Matrix() {}
         virtual void multWithVec(double* vec, double* into) = 0;
-        virtual void print() = 0;
 };
 
 class FullMatrix : public Matrix {
@@ -26,7 +25,6 @@ class FullMatrix : public Matrix {
         FullMatrix(const string& filename);
         ~FullMatrix();
         void multWithVec(double* vec, double* into);
-        void print();
 };
 
 class CrMatrix : public Matrix {
@@ -38,9 +36,19 @@ class CrMatrix : public Matrix {
         CrMatrix(const string& filename);
         ~CrMatrix();
         void multWithVec(double* vec, double* into);
-        void print();
 };
 
+/**
+ * Method for reading matrix from input.
+ * Input is expected in format:
+ *     size numer_of_nonzero_values
+ *     x_index  y_index  value
+ *     ...      ...      ...
+ * Optional parameter oneIndexed says if indexes starts at 1 or not
+ * @param input input stream of matrix
+ * @param oneIndexed whether indexes starts at 1
+ * @return size of the matrix and the matrix itself in form of 1D array
+ */
 pair <int, double*> readMatrix(istream& input, bool oneIndexed = false) {
     int size = 0;
     int nonZeros = 0;
@@ -62,6 +70,15 @@ pair <int, double*> readMatrix(istream& input, bool oneIndexed = false) {
     return make_pair(size, matrix);
 }
 
+/**
+ * Method for reading matrix from input.
+ * Input is expected in format:
+ *     size
+ *     value  value  ...
+ *     ...    ...    ...
+ * @param input input stream of matrix
+ * @return size of the matrix and the matrix itself in form of 1D array
+ */
 pair <int, double*> readMatrixFull(istream& input) {
     int size = 0;
     
@@ -80,6 +97,12 @@ pair <int, double*> readMatrixFull(istream& input) {
     return make_pair(size, matrix);
 }
 
+/**
+ * Method for reading matrix from input.
+ * Based on the filename, it calls one of the methods above
+ * @param input input stream of matrix
+ * @return size of the matrix and the matrix itself in form of 1D array
+ */
 pair <int, double*> readMatrix(const string& filename) {
     cout << "Loading matrix from " << filename << endl;
 
@@ -115,19 +138,7 @@ void FullMatrix::multWithVec(double* vec, double* into) {
     }
 }
 
-void FullMatrix::print() {
-    for (int i = 0; i < size; i++) {
-        cout << "|";
-        for (int j = 0; j < size; j++) {
-            cout << " " << data[i * size + j];
-        }
-        cout << " |" << endl;
-    }
-}
-
-CrMatrix::CrMatrix(const string& filename) {
-    pair<int, double*> matrix = readMatrix(filename);
-    
+CrMatrix::CrMatrix(const string& filename) {    
     ifstream input(filename);
 
     bool oneIndexed;
@@ -179,10 +190,6 @@ void CrMatrix::multWithVec(double* vec, double* into) {
         }
         into[i] = acc;
     }
-}
-
-void CrMatrix::print() {
-    // Not supported
 }
 
 void printVec(int size, double* vec) {
@@ -332,59 +339,6 @@ void sdruGrad(int size, Matrix* A, double *b, double* x) {
     delete[] s;
 
 }
-
-// void testLoading() {
-//     istringstream mat("2 3 \n 0 0 1.0 \n 1 0 3.0 \n 1 1 4.0");
-//     auto matrixR = readMatrixZeroIndexed(mat);
-//     assert(matrixR.first == 2);
-//     assert(matrixR.second[0] == 1.0);
-//     assert(matrixR.second[1] == 0.0);
-//     assert(matrixR.second[2] == 3.0);
-//     assert(matrixR.second[3] == 4.0);
-//     delete[] matrixR.second;
-
-
-//     istringstream vec("1.0 \n 2.0 \n 3.0 \n 4.0");
-//     auto vectR = readVector(4, vec);
-//     assert(vectR.first == 4);
-//     assert(vectR.second[0] == 1.0);
-//     assert(vectR.second[1] == 2.0);
-//     assert(vectR.second[2] == 3.0);
-//     assert(vectR.second[3] == 4.0);
-//     delete[] vectR.second;
-// }
-
-// void testMultVecVec() {
-//     int size = 3;
-//     double vecA[3] = { 2.0, 1.0, 3.0 };
-//     double vecB[3] = { 10.0, 4.0, 15.0 };
-
-//     assert(multVecVec(size, vecA, vecB) == 69.0);
-// }
-
-// void testGradientDescent() {
-//     int size = 3;
-//     double mat[9] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 };
-//     double vec[3] = { 19.0, 46.0, 73.0 };
-//     double* res = new double[size];
-//     double* res2 = new double[size];
-
-//     gradientDescent(size, mat, vec, res);
-
-//     multMatVec(size, mat, res, res2);
-
-//     printVec(size, vec);
-//     printVec(size, res2);
-
-//     delete[] res;
-//     delete[] res2;
-// }
-
-// void test() {
-//     testLoading();
-//     testMultVecVec();
-//     testGradientDescent();
-// }
 
 int main(int argc, char** argv) {
 
