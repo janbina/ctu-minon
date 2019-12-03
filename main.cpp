@@ -138,7 +138,9 @@ void FullMatrix::multWithVec(double* vec, double* into) {
     }
 }
 
-CrMatrix::CrMatrix(const string& filename) {    
+CrMatrix::CrMatrix(const string& filename) {
+    cout << "Loading matrix from " << filename << endl;
+
     ifstream input(filename);
 
     bool oneIndexed;
@@ -170,6 +172,8 @@ CrMatrix::CrMatrix(const string& filename) {
             addr[i] = x;
         }
     }
+
+    cout << "Loaded matrix of size [" << size << ", " << size << "] with " << nonZeros << " non zero numbers." << endl;
 }
 
 CrMatrix::~CrMatrix() {
