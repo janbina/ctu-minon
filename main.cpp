@@ -354,9 +354,9 @@ void sdruGrad(int size, Matrix* A, double *b, double* x) {
 
 int main(int argc, char** argv) {
 
-    if (argc < 4) {
-        cout << "Provide filename of matrix, vector and output, eventually matrix storing method, like this:" << endl;
-        cout << "\t" << argv[0] << " matrix.txt vector.txt output.txt [full/cr]" << endl;
+    if (argc < 5) {
+        cout << "Provide filename of matrix, vector and output, method of solving, and eventually matrix storing method, like this:" << endl;
+        cout << "\t" << argv[0] << " matrix.txt vector.txt output.txt (gd/sg) [full/cr]" << endl;
         return 1;
     }
 
@@ -364,8 +364,18 @@ int main(int argc, char** argv) {
     string vectorFN = argv[2];
     string outputFN = argv[3];
 
+    bool GD;
+    if (string(argv[4]).compare("gd") == 0) {
+        GD = true;
+    } else if (string(argv[4]).compare("sg") == 0) {
+        GD = false;
+    } else {
+        cerr << "Invalid solving method, " << argv[4] << ". Expected gd or sg" << endl;
+        return 1;
+    }
+
     bool CR = false;
-    if (argc >= 5 && string(argv[4]).compare("cr") == 0) {
+    if (argc >= 6 && string(argv[5]).compare("cr") == 0) {
         CR = true;
     }
 
@@ -383,7 +393,11 @@ int main(int argc, char** argv) {
 
     double* result = new double[size];
 
-    gradientDescent(size, matrix, vec, result);
+    if (GD) {
+        gradientDescent(size, matrix, vec, result);
+    } else {
+        sdruGrad(size, matrix, vec, result);
+    }
 
     writeVector(outputFN, size, result);
 
