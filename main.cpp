@@ -368,7 +368,7 @@ int main(int argc, char** argv) {
     string vectorFN = argv[2];
     string outputFN = argv[3];
 
-    bool GD;
+    bool GD = false;
     if (string(argv[4]).compare("gd") == 0) {
         GD = true;
     } else if (string(argv[4]).compare("sg") == 0) {
@@ -379,8 +379,15 @@ int main(int argc, char** argv) {
     }
 
     bool CR = false;
-    if (argc >= 6 && string(argv[5]).compare("cr") == 0) {
-        CR = true;
+    if (argc >= 6) {
+        if (string(argv[5]).compare("cr") == 0) {
+            CR = true;
+        } else if (string(argv[5]).compare("full") == 0) {
+            CR = false;
+        } else {
+        cerr << "Invalid storing method, " << argv[5] << ". Expected cr or full" << endl;
+        return 1;
+        }
     }
 
     Matrix* matrix;
