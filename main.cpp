@@ -279,6 +279,10 @@ void vecMinusNumVec(int size, double* a, double num, double* b, double* into) {
 }
 
 void gradientDescent(int size, Matrix* A, double* b, double* x) {
+    double EPS = 0.001;
+    int    MAX_IT = 100000;
+    int    LOG_IT = 10000;
+
     double* r = new double[size];
     double* h = new double[size];
     double alpha;
@@ -298,12 +302,13 @@ void gradientDescent(int size, Matrix* A, double* b, double* x) {
         
         alpha = norm(size, r);
         iter++;
-        if (iter % 1 == 0) {
+        if (iter % LOG_IT == 0) {
             cout << "||R" << iter << "|| = " << alpha << endl;
         }
-        if (alpha < 0.17) {
+        if (alpha < EPS || iter > MAX_IT) {
+            cout << "||R" << iter << "|| = " << alpha << endl;
             break;
-        }        
+        }
     }
 
     delete[] r;
@@ -311,6 +316,10 @@ void gradientDescent(int size, Matrix* A, double* b, double* x) {
 }
 
 void sdruGrad(int size, Matrix* A, double *b, double* x) {
+    double EPS = 0.001;
+    int    MAX_IT = 1000;
+    int    LOG_IT = 100;
+
     double* rO = new double[size];
     double* rN = new double[size];
     double* s = new double[size];
@@ -335,10 +344,11 @@ void sdruGrad(int size, Matrix* A, double *b, double* x) {
         
         alpha = norm(size, rN);
         iter++;
-        if (iter % 1 == 0) {
+        if (iter % LOG_IT == 0) {
             cout << "||R" << iter << "|| = " << alpha << endl;
         }
-        if (alpha < 0.01) {
+        if (alpha < EPS || iter > MAX_IT) {
+            cout << "||R" << iter << "|| = " << alpha << endl;
             break;
         }
 
