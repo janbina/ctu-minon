@@ -370,34 +370,12 @@ int main(int argc, char** argv) {
     double* vec = vectorR.second;
 
     double* result = new double[size];
-    double* result2 = new double[size];
 
     gradientDescent(size, matrix, vec, result);
-
-    // cout << endl << endl;
-    // printVec(size, result);
-    matrix->multWithVec(result, result2);
-
-    int x = 0;
-    cout << "-> " << vec[x] << " - " << result2[x] << endl;
-    x = 1;
-    cout << "-> " << vec[x] << " - " << result2[x] << endl;
-    x = 3;
-    cout << "-> " << vec[x] << " - " << result2[x] << endl;
-    x = 8;
-    cout << "-> " << vec[x] << " - " << result2[x] << endl;
-    x = 9;
-    cout << "-> " << vec[x] << " - " << result2[x] << endl;
-    // x = 99;
-    // cout << "-> " << vec[x] << " - " << result[x] << endl;
-    // x = 333;
-    // cout << "-> " << vec[x] << " - " << result[x] << endl;
-
 
     delete matrix;
     delete[] vec;
     delete[] result;
-    delete[] result2;
     
     return 0;
 }
