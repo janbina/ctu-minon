@@ -232,6 +232,18 @@ pair <int, double*> readVector(const string& filename) {
     return readVector(size, ifs);
 }
 
+void writeVector(const string& filename, int size, double* vec) {
+    cout << "Writing vector to " << filename << endl;
+
+    ofstream ofs(filename);
+    ofs.precision(12);
+    ofs << std::scientific;
+
+    for (int i = 0; i < size; i++) {
+        ofs << vec[i] << endl;
+    }
+}
+
 double multVecVec(int size, double* a, double* b) {
     double acc = 0.0;
     for (int i = 0; i < size; i++) {
@@ -342,20 +354,20 @@ void sdruGrad(int size, Matrix* A, double *b, double* x) {
 
 int main(int argc, char** argv) {
 
-    if (argc < 3) {
-        cout << "Provide filename of matrix and vector, eventually matrix storing method, like this:" << endl;
-        cout << "\t" << argv[0] << " matrix.txt vector.txt [full/cr]" << endl;
+    if (argc < 4) {
+        cout << "Provide filename of matrix, vector and output, eventually matrix storing method, like this:" << endl;
+        cout << "\t" << argv[0] << " matrix.txt vector.txt output.txt [full/cr]" << endl;
         return 1;
     }
 
     string matrixFN = argv[1];
     string vectorFN = argv[2];
+    string outputFN = argv[3];
 
     bool CR = false;
-    if (argc >= 4 && string(argv[3]).compare("cr") == 0) {
+    if (argc >= 5 && string(argv[4]).compare("cr") == 0) {
         CR = true;
     }
-    
 
     Matrix* matrix;
     if (CR) {
@@ -372,6 +384,8 @@ int main(int argc, char** argv) {
     double* result = new double[size];
 
     gradientDescent(size, matrix, vec, result);
+
+    writeVector(outputFN, size, result);
 
     delete matrix;
     delete[] vec;
