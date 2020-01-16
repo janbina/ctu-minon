@@ -315,7 +315,7 @@ void gradientDescent(int size, Matrix* A, double* b, double* x) {
     delete[] h;
 }
 
-void sdruGrad(int size, Matrix* A, double *b, double* x) {
+void conjugateGradient(int size, Matrix* A, double *b, double* x) {
     double EPS = 0.00001;
     int    MAX_IT = 100000;
     int    LOG_IT = 100;
@@ -417,7 +417,7 @@ int main(int argc, char** argv) {
     if (GD) {
         gradientDescent(size, matrix, vec, result);
     } else {
-        sdruGrad(size, matrix, vec, result);
+        conjugateGradient(size, matrix, vec, result);
     }
 
     writeVector(outputFN, size, result);
