@@ -1,2 +1,6 @@
 a.out
-/data
+/data/*
+!/data/mat_cct_7650.txt
+!/data/right_side_cct_7650.txt
+!/data/mat_ps_8200.txt
+!/data/right_side_ps_8200.txt
