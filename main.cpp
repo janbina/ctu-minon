@@ -279,9 +279,9 @@ void vecMinusNumVec(int size, double* a, double num, double* b, double* into) {
 }
 
 void gradientDescent(int size, Matrix* A, double* b, double* x) {
-    double EPS = 0.001;
-    int    MAX_IT = 100000;
-    int    LOG_IT = 10000;
+    double EPS = 0.0001;
+    int    MAX_IT = 10000000;
+    int    LOG_IT = 100000;
 
     double* r = new double[size];
     double* h = new double[size];
@@ -300,7 +300,7 @@ void gradientDescent(int size, Matrix* A, double* b, double* x) {
         vecPlusNumVec(size, x, alpha, r, x);
         vecMinusNumVec(size, r, alpha, h, r);
         
-        alpha = norm(size, r);
+        alpha = norm(size, r) / norm(size, b);
         iter++;
         if (iter % LOG_IT == 0) {
             cout << "||R" << iter << "|| = " << alpha << endl;
@@ -316,8 +316,8 @@ void gradientDescent(int size, Matrix* A, double* b, double* x) {
 }
 
 void sdruGrad(int size, Matrix* A, double *b, double* x) {
-    double EPS = 0.001;
-    int    MAX_IT = 1000;
+    double EPS = 0.00001;
+    int    MAX_IT = 100000;
     int    LOG_IT = 100;
 
     double* rO = new double[size];
@@ -342,7 +342,7 @@ void sdruGrad(int size, Matrix* A, double *b, double* x) {
 
         vecMinusNumVec(size, rO, alpha, h, rN);
         
-        alpha = norm(size, rN);
+        alpha = norm(size, rN) / norm(size, b);
         iter++;
         if (iter % LOG_IT == 0) {
             cout << "||R" << iter << "|| = " << alpha << endl;
